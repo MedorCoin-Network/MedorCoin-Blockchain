@@ -1,10 +1,11 @@
-Not production-ready as-is. Here is a robust, real-world implementation that handles authentication, atomic key generation, uniqueness, and proper error handling.
-
-// Prerequisites (adjust to your app setup)
 const express = require('express');
 const crypto = require('crypto');
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 const app = express();
+
+// Serve the newly grouped HTML folder
+app.use(express.static(path.join(__dirname, 'public-frontend')));
 
 // Example DB setup (adjust to your setup)
 const db = new sqlite3.Database('./db.sqlite');
