@@ -149,13 +149,14 @@
       <span class="muted">Chat & support</span>
     </a>
 
-    <!-- Crypto Whales Card -->
-    <a class="tile" href="whales.html" style="background:#fff;border:1px solid var(--border);min-height:96px;">
+       <!-- Crypto Whales Card -->
+    <a class="tile" href="crypto-whales.html" style="background:#F5F5DC;color:#333;border:1px solid var(--border);">
+      <div class="icon">🐋</div>
       <b>Crypto Whales</b>
-      <span class="muted">Large flows</span>
+      <span class="muted" style="color:#333;">Large flows</span>
     </a>
 
-    <!-- INSERTED HERE: Swap Interface Card breaking the grid before the "MORE" tile -->
+    <!-- INSERTED TRADING MODULE IFRAME: Connects directly to your updated swap interface -->
     <div class="swap-embedded-card" style="grid-column: 1 / -1; width: 100%; display: flex; justify-content: center; margin: 20px 0; min-height: 580px;">
       <iframe 
         src="swap.html" 
@@ -166,13 +167,15 @@
       </iframe>
     </div>
 
-    <!-- MORE Card (Placed strictly after the swap card frame) -->
-    <a class="tile" href="more.html" style="background:#1e293b;color:#fff;min-height:96px;display:flex;align-items:center;justify-content:center;">
-      <b style="font-size:18px;">MORE</b>
+    <!-- More Feature Card -->
+    <a class="tile" href="more.html" style="background:#1e293b;color:#fff;border:1px solid var(--border);">
+      <div class="icon" style="font-size:18px;">＋</div>
+      <b>More</b>
+      <span class="muted" style="color:#94a3b8;">All features</span>
     </a>
 
-  </div>
-  
+  </div> <!-- End of tileGrid -->
+
 <script>
   const MEDOR_ADDRESS = "0xd37A0F3F4E0E9F79b5eE2EC953EAD81112424b94";
   const WBTC_ADDRESS  = "0x2260FAC5E5542a773Aa44BCfeDf7C193bc2C5996";
