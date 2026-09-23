@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity 0.8.24;
 
 interface IERC20 {
     function balanceOf(address account) external view returns (uint256);
@@ -19,7 +19,13 @@ library SafeERC20 {
     }
 
     function safeTransfer(IERC20 token, address to, uint256 value) internal {
-        require(token.transfer(to, value), "ERC20 transfer failed");
+        (bool success, bytes memory returndata) = address(token).call(
+            abi.encodeWithSelector(IERC20.transfer.selector, to, value)
+        );
+        require(
+            success && (returndata.length == 0 || (returndata.length >= 32 && abi.decode(returndata, (bool)))),
+            "ERC20 transfer failed"
+        );
     }
 }
 
@@ -77,7 +83,7 @@ interface AggregatorV3Interface {
 
 /**
  * @title MedorCoin Professional Locker
- * @notice Production-grade locker for Tokens and NFTs with dynamic $45 USD fee.
+ * @notice Production-grade locker for Tokens and NFTs with dynamic $45 USD fee calculations.
  */
 contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receiver {
     using SafeERC20 for IERC20;
@@ -94,10 +100,10 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
     // State Variables
     mapping(uint256 => Lock) public locks;
     mapping(address => uint256[]) private _userLockIds; 
-    mapping(address => uint256) public totalLockedPerToken; // Security: Prevents admin rescue of user funds
+    mapping(address => uint256) public totalLockedPerToken;
     
     uint256 public nextLockId;
-    AggregatorV3Interface internal priceFeed;
+    AggregatorV3Interface internal immutable priceFeed;
     uint256 public constant USD_FEE = 45; 
     address payable public treasury;
 
@@ -113,10 +119,26 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
     }
 
     /**
+     * @notice Standard Mandatory Compliance Callback Function for ERC721 safety
+     * Fixed: Resolved broken selector assignment to compile cleanly
+     */
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure override returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
+    }
+
+    /**
      * @notice Calculates the native token amount equivalent to $45 USD via Chainlink.
      */
     function getRequiredPayment() public view returns (uint256) {
-        (, int256 price, , , ) = priceFeed.latestRoundData();
+        (, int256 price, , uint256 updatedAt, ) = priceFeed.latestRoundData();
+        require(price > 0, "Oracle: INVALID_PRICE");
+        require(block.timestamp - updatedAt < 86400, "Oracle: STALE_PRICE_FEED");
+        
         uint8 decimals = priceFeed.decimals();
         uint256 adjustedPrice = uint256(price) * (10**(18 - decimals));
         return (USD_FEE * 1e18 * 1e18) / adjustedPrice;
@@ -136,7 +158,6 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
         
         _executeLock(_token, _amountOrId, _unlockTime, _isNFT);
         
-        // Immediate transfer of fee to treasury
         (bool success, ) = treasury.call{value: msg.value}("");
         require(success, "Treasury transfer failed");
     }
@@ -154,7 +175,8 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
         require(count > 0 && count <= 50, "Invalid batch size");
         require(count == _amountsOrIds.length && count == _unlockTimes.length && count == _isNFTs.length, "Array mismatch");
 
-        uint256 totalRequired = getRequiredPayment() * count;
+        uint256 singleFee = getRequiredPayment();
+        uint256 totalRequired = singleFee * count;
         require(msg.value >= totalRequired, "Insufficient total $45 fees");
 
         for (uint256 i = 0; i < count; i++) {
@@ -169,6 +191,7 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
      * @dev Internal logic for security and gas optimization.
      */
     function _executeLock(address _token, uint256 _amountOrId, uint256 _unlockTime, bool _isNFT) internal {
+        require(_token != address(0), "Invalid token address");
         require(_unlockTime > block.timestamp, "Unlock must be in future");
         require(_unlockTime < block.timestamp + 3650 days, "Max lock 10 years");
 
@@ -178,6 +201,8 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
             uint256 balBefore = IERC20(_token).balanceOf(address(this));
             IERC20(_token).safeTransferFrom(msg.sender, address(this), _amountOrId);
             uint256 actualAmount = IERC20(_token).balanceOf(address(this)) - balBefore;
+            require(actualAmount > 0, "Must lock non-zero token value");
+            
             totalLockedPerToken[_token] += actualAmount;
             _amountOrId = actualAmount;
         }
@@ -206,14 +231,16 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
         require(l.active, "Inactive");
 
         l.active = false;
-        if (!l.isNFT) totalLockedPerToken[l.token] -= l.amountOrId;
+        uint256 withdrawalAmount = l.amountOrId;
+        l.amountOrId = 0;
 
         if (l.isNFT) {
-            IERC721(l.token).safeTransferFrom(address(this), msg.sender, l.amountOrId);
+            IERC721(l.token).safeTransferFrom(address(this), msg.sender, withdrawalAmount);
         } else {
-            IERC20(l.token).safeTransfer(msg.sender, l.amountOrId);
+            totalLockedPerToken[l.token] -= withdrawalAmount;
+            IERC20(l.token).safeTransfer(msg.sender, withdrawalAmount);
         }
-        emit Withdrawn(_id, msg.sender, l.amountOrId);
+        emit Withdrawn(_id, msg.sender, withdrawalAmount);
     }
 
     /**
@@ -225,6 +252,7 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
 
     /**
      * @notice Rescue tokens accidentally sent to contract (cannot touch user-locked funds).
+     * Fixed: Shifted native coin rescue loops to safe low-level execution calls to handle custom multi-sig ownership blocks
      */
     function rescueExcessTokens(address _token, uint256 _amount) external onlyOwner {
         uint256 contractBalance = (_token == address(0)) ? address(this).balance : IERC20(_token).balanceOf(address(this));
@@ -232,14 +260,11 @@ contract MedorCoinProfessionalLocker is ReentrancyGuard, Ownable, IERC721Receive
         require(_amount <= rescuable, "Cannot rescue user funds");
 
         if (_token == address(0)) {
-            payable(owner()).transfer(_amount);
+            (bool success, ) = payable(owner()).call{value: _amount}("");
+            require(success, "Emergency native coin rescue failed");
         } else {
             IERC20(_token).safeTransfer(owner(), _amount);
         }
         emit EmergencyRescued(_token, _amount);
-    }
-
-    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
-        return this.onERC721Received.selector;
     }
 }
