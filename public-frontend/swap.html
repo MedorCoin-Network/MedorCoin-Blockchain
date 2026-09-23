@@ -4,14 +4,19 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Buy MedorCoin</title>
+  
+  <!-- CDN Inclusion for Ethers.js v6 Browser Engine Integration -->
+  <script src="https://cloudflare.com"></script>
+  
   <style>
     :root {
       --gold: #f3e5ab; 
+      --dark-blue: #121b2d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Inter, Segoe UI, sans-serif;
-      background: #121b2d;
+      background: var(--dark-blue);
       color: #ffffff;
       padding: 16px;
       display: flex;
@@ -27,6 +32,7 @@
       padding: 24px;
       border-radius: 20px;
       border: 1px solid rgba(0,0,0,0.1);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
     }
     .swap-title {
       font-weight: 800;
@@ -45,10 +51,23 @@
       margin-bottom: 6px;
       color: #1a1a1a;
     }
+    select {
+      width: 100%;
+      padding: 14px;
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 10px;
+      color: #000000;
+      font-size: 15px;
+      font-weight: 600;
+      outline: none;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
     input {
       width: 100%;
       padding: 14px;
-      background: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.85);
       border: 1px solid rgba(0,0,0,0.15);
       border-radius: 10px;
       color: #000000;
@@ -61,14 +80,15 @@
       border-color: #000000;
     }
     input[readonly] {
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.1);
       cursor: default;
     }
     .rate-info {
       font-size: 12px;
       font-weight: 600;
       color: #333333;
-      margin: 10px 0 20px;
+      margin: 12px 0 20px;
       display: flex;
       justify-content: space-between;
     }
@@ -82,22 +102,27 @@
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
     }
     .btn:hover {
       background: #222222;
+    }
+    .btn:active {
+      transform: scale(0.98);
     }
     .btn:disabled {
       background: #aaaaaa;
       color: #666666;
       cursor: not-allowed;
+      transform: none;
     }
     .feedback {
       font-size: 12px;
       text-align: center;
       margin-top: 12px;
       color: #444444;
-      font-weight: 500;
+      font-weight: 600;
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -107,47 +132,92 @@
   <h1 class="swap-title">Buy MedorCoin</h1>
   
   <div class="input-group">
-    <label>Amount of Wrapped Bitcoin (WBTC) to Spend</label>
-    <input type="number" id="wbtcInput" step="0.00000001" placeholder="0.00000000" oninput="calculateOutput()">
+    <label for="assetSelect">Token to Spend</label>
+    <select id="assetSelect" onchange="handleAssetChange()">
+      <option value="WBTC">Wrapped Bitcoin (WBTC)</option>
+      <option value="MEDAC">Medac Token (MEDAC)</option>
+    </select>
+    
+    <label id="inputLabel">Amount to Spend</label>
+    <input type="number" id="tokenInput" step="0.00000001" placeholder="0.00000000" oninput="calculateOutput()">
   </div>
 
   <div class="input-group">
-    <label>Amount of MEDOR You Receive</label>
-    <input type="text" id="medorOutput" readonly placeholder="0.0000">
+    <label>Estimated MEDOR Received</label>
+    <input type="text" id="medorOutput" readonly placeholder="0.0000 MEDOR">
   </div>
 
   <div class="rate-info">
-    <span>Create Pool:</span>
-    <span id="rateDisplay" style="font-family: monospace;">Loading on-chain rate...</span>
+    <span>Current Pool Rate:</span>
+    <span id="rateDisplay" style="font-family: monospace;">1 WBTC = 2,050 MEDOR</span>
   </div>
 
   <button class="btn" id="actionButton" onclick="handleTradePipeline()">Connect Wallet</button>
-  <div id="feedbackText" class="feedback">Connect your Web3 extension wallet to unlock the transaction pool.</div>
+  <div id="feedbackText" class="feedback">Establish a link with your Web3 provider to scan node parameters.</div>
 </div>
 
 <script>
+  // Core Deployment Smart Contract Addresses
   const MEDOR_ADDRESS = "0xd37A0F3F4E0E9F79b5eE2EC953EAD81112424b94";
   const WBTC_ADDRESS  = "0x2260FAC5E5542a773Aa44BCfeDf7C193bc2C5996";
+  const MEDAC_ADDRESS = "0x0cadd7ec2943eabaf6a4e2e8b20e77fd31179895";
 
+  // Web3 Core ABI Blueprints
   const MEDOR_ABI = [
     "function isSwapActive() view returns (bool)",
     "function tokensPerWBTC() view returns (uint256)",
-    "function swapWBTCForMedor(uint256 wbtcAmount) external"
+    "function swapWBTCForMedor(uint256 wbtcAmount) external",
+    "function swapMEDACForMedor(uint256 medacAmount) external" 
   ];
 
-  const WBTC_ABI = [
+  const ERC20_ABI = [
     "function allowance(address owner, address spender) view returns (uint256)",
     "function approve(address spender, uint256 value) external returns (bool)"
   ];
 
-  let provider, signer, medorContract, wbtcContract;
-  let walletConnected = bool;
+  // Runtime State Properties
+  let provider, signer, medorContract;
+  let walletConnected = false;
   let userAddress = "";
-  let systemTokensPerWbtc = 0n;
+  
+  // Custom Hashing Engine Parameters (BigInt Configuration)
+  let tokensPerWbtc = 2050n;
+  let tokensPerMedac = 10n; // Fallback token swap ratio
+
+  function handleAssetChange() {
+    const asset = document.getElementById("assetSelect").value;
+    const input = document.getElementById("tokenInput");
+    
+    if (asset === "MEDAC") {
+      input.placeholder = "0.000000000000000000";
+      input.step = "0.000000000000000001";
+      document.getElementById("rateDisplay").innerText = "1 MEDAC = " + tokensPerMedac.toString() + " MEDOR";
+    } else {
+      input.placeholder = "0.00000000";
+      input.step = "0.00000001";
+      document.getElementById("rateDisplay").innerText = "1 WBTC = " + tokensPerWbtc.toString() + " MEDOR";
+    }
+    calculateOutput();
+  }
+
+  function calculateOutput() {
+    const inputVal = document.getElementById("tokenInput").value.trim();
+    const outputField = document.getElementById("medorOutput");
+    const asset = document.getElementById("assetSelect").value;
+    
+    if (!inputVal || isNaN(inputVal) || parseFloat(inputVal) <= 0) {
+      outputField.value = "0.0000 MEDOR";
+      return;
+    }
+    
+    const rateMultiplier = (asset === "MEDAC") ? Number(tokensPerMedac) : Number(tokensPerWbtc);
+    const result = parseFloat(inputVal) * rateMultiplier;
+    outputField.value = result.toLocaleString(undefined, { minimumFractionDigits: 4 }) + " MEDOR";
+  }
 
   async function connectWallet() {
     if (!window.ethereum) {
-      alert("No Web3 provider recognized. Please install MetaMask or Rabby.");
+      alert("No authorized Web3 wallet detected. Please install MetaMask or Rabby.");
       return;
     }
     try {
@@ -155,12 +225,14 @@
       const accounts = await provider.send("eth_requestAccounts", []);
       signer = await provider.getSigner();
       userAddress = accounts[0];
+      
       medorContract = new ethers.Contract(MEDOR_ADDRESS, MEDOR_ABI, signer);
-      wbtcContract  = new ethers.Contract(WBTC_ADDRESS, WBTC_ABI, signer);
       walletConnected = true;
+      
       await syncContractParameters();
     } catch (err) {
-      console.error("Connection cancelled:", err);
+      console.error("Wallet hook aborted:", err);
+      document.getElementById("feedbackText").innerText = "Connection initialization cancelled.";
     }
   }
 
@@ -168,36 +240,30 @@
     if (!medorContract) return;
     try {
       const active = await medorContract.isSwapActive();
-      const rate = await medorContract.tokensPerWBTC();
-      systemTokensPerWbtc = BigInt(rate);
-      document.getElementById("rateDisplay").innerText = "1 WBTC = " + systemTokensPerWbtc.toString() + " MEDOR";
+      try {
+        const chainRate = await medorContract.tokensPerWBTC();
+        tokensPerWbtc = BigInt(chainRate);
+      } catch (e) {
+        console.warn("Fallback to static WBTC rate allocation.");
+      }
+      
+      handleAssetChange(); // Refreshes layout displays text parameters
+      
       const btn = document.getElementById("actionButton");
       const feedback = document.getElementById("feedbackText");
+      
       if (!active) {
         btn.setAttribute("disabled", "true");
-        btn.innerText = "Swap Closed";
-        feedback.innerText = "Pre-launch swap pool parameters are currently set to closed by the administrator.";
+        btn.innerText = "Swap Disabled";
+        feedback.innerText = "On-chain swap parameters are currently closed by core administration layout rules.";
       } else {
         btn.removeAttribute("disabled");
-        btn.innerText = "Execute Purchase";
-        feedback.innerText = "Clears token ledger validation layers instantly.";
+        btn.innerText = "Execute Swap";
+        feedback.innerText = "Connected! Ledger authorization matrices verified.";
       }
     } catch (err) {
-      console.error("State sync tracking issue:", err);
-      document.getElementById("rateDisplay").innerText = "1 WBTC = 2,050 MEDOR";
-      systemTokensPerWbtc = 2050n;
+      console.error("RPC Parameter sync failure:", err);
     }
-  }
-
-  function calculateOutput() {
-    const inputAmount = document.getElementById("wbtcInput").value.trim();
-    const outputField = document.getElementById("medorOutput");
-    if (!inputAmount || isNaN(inputAmount) || systemTokensPerWbtc === 0n || parseFloat(inputAmount) <= 0) {
-      outputField.value = "0.0000";
-      return;
-    }
-    const outputTokens = parseFloat(inputAmount) * Number(systemTokensPerWbtc);
-    outputField.value = outputTokens.toLocaleString(undefined, { minimumFractionDigits: 4 }) + " MEDOR";
   }
 
   async function handleTradePipeline() {
@@ -205,43 +271,43 @@
       await connectWallet();
       return;
     }
-    const inputVal = document.getElementById("wbtcInput").value.trim();
+    
+    const inputVal = document.getElementById("tokenInput").value.trim();
+    const asset = document.getElementById("assetSelect").value;
     const feedback = document.getElementById("feedbackText");
     const btn = document.getElementById("actionButton");
+    
     if (!inputVal || isNaN(inputVal) || parseFloat(inputVal) <= 0) {
-      alert("Please provide a valid spending input value.");
+      alert("Please provide a valid trade numeric value entry.");
       return;
     }
+    
     try {
       btn.setAttribute("disabled", "true");
-      const satoshiUnits = BigInt(Math.round(parseFloat(inputVal) * 10**8));
-      feedback.innerText = "Verifying existing WBTC authorization allowance...";
       
-      const currentAllowance = await wbtcContract.allowance(userAddress, MEDOR_ADDRESS);
+      // Determine configuration properties based on decimals (WBTC = 8, MEDAC = 18)
+      const targetTokenAddress = (asset === "MEDAC") ? MEDAC_ADDRESS : WBTC_ADDRESS;
+      const decimals = (asset === "MEDAC") ? 18 : 8;
+      const baseUnits = BigInt(Math.round(parseFloat(inputVal) * Math.pow(10, decimals)));
       
-      if (currentAllowance < satoshiUnits) {
-        feedback.innerText = "Step 1 of 2: Confirm WBTC allowance in your extension wallet...";
-        const txApprove = await wbtcContract.approve(MEDOR_ADDRESS, satoshiUnits);
+      const spendingTokenContract = new ethers.Contract(targetTokenAddress, ERC20_ABI, signer);
+      
+      feedback.innerText = `Validating ${asset} contract spend allowance...`;
+      const currentAllowance = await spendingTokenContract.allowance(userAddress, MEDOR_ADDRESS);
+      
+      if (currentAllowance < baseUnits) {
+        feedback.innerText = `Step 1 of 2: Authorize ${asset} allowance lock via extension pop-up...`;
+        const txApprove = await spendingTokenContract.approve(MEDOR_ADDRESS, baseUnits);
         await txApprove.wait();
-        feedback.innerText = "Allowance cleared! Initializing swap finalization...";
+        feedback.innerText = "Allowance confirmed! Accessing swap pools...";
       }
       
-      feedback.innerText = "Step 2 of 2: Executing on-chain swap transaction...";
-      const txSwap = await medorContract.swapWBTCForMedor(satoshiUnits);
-      await txSwap.wait();
+      feedback.innerText = "Step 2 of 2: Executing final pool token settlement transaction...";
+      let txSwap;
+      if (asset === "MEDAC") {
+        txSwap = await medorContract.swapMEDACForMedor(baseUnits);
+      } else {
+        txSwap = await medorContract.swapWBTCForMedor(baseUnits);
+      }
       
-      feedback.innerText = "Swap complete! Medor tokens transferred successfully.";
-      document.getElementById("wbtcInput").value = "";
-      document.getElementById("medorOutput").value = "0.0000";
-    } catch (err) {
-      console.error("Trade pipeline error:", err);
-      feedback.innerText = "Transaction failed or was canceled.";
-    } finally {
-      btn.removeAttribute("disabled");
-      btn.innerText = "Execute Purchase";
-    }
-  }
-</script>
-</body>
-</html>
-Us
+      await txSwap.wait();
