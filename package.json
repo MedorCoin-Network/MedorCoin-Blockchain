@@ -17,6 +17,7 @@
     "argon2": "^0.40.1",
     "axios": "^1.20.0",
     "brace-expansion": "^5.0.9",
+    "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "express": "^5.2.1",
     "ioredis": "^5.4.1",
