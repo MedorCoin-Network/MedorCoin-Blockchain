@@ -3,8 +3,9 @@ const express = require('express');
 const path = require('path');
 const cors = require('cors');
 
-// Import your verified CommonJS cryptographic security gateway layer
+// Import your cryptographic security gateway and atomic database structures
 const { verifyOnChainTransaction } = require('./gateway.cjs');
+const { commitTxToLedgerState } = require('./db.cjs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,10 +14,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve all frontend layout assets natively from this location
+// Serve all frontend layout assets natively from this folder
 app.use(express.static(path.join(__dirname)));
 
-// Root landing page logic maps to your main dashboard layout
+// Root landing page logic maps directly to your homepage dashboard
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -36,7 +37,7 @@ app.post('/api/v1/rpc', (req, res) => {
 });
 
 // Production Gateway API for Custom App Core Form Interactions
-app.post('/api/v1/transaction', (req, res) => {
+app.post('/api/v1/transaction', async (req, res) => {
     const apiKey = req.headers['x-mdr-api-key'];
 
     // Verify system key authorization parameter rules
@@ -45,13 +46,15 @@ app.post('/api/v1/transaction', (req, res) => {
     }
 
     try {
-        // Enforce the cryptographic signature validation rule block
+        // 1. Enforce the cryptographic signature validation rule block
         verifyOnChainTransaction(req.body);
 
+        // 2. Commit the validated parameters directly to the Redis database mempool pipeline
+        await commitTxToLedgerState(req.body);
+
         console.log(`\n=================================================================`);
-        console.log(`🎉 CRYPTOGRAPHIC TRANSACTION MATCH VERIFIED & ENQUEUED TO MEMPOOL`);
-        console.log(`Sender Wallet:    ${req.body.sender}`);
-        console.log(`Transaction Hash: ${req.body.hash}`);
+        console.log(`🎉 TRANSACTION ATOMICALLY PERSISTED & QUEUED TO REDOS MEMPOOL`);
+        console.log(`Sender: ${req.body.sender} | Status: COMMITTED_TO_MEMPOOL`);
         console.log(`=================================================================`);
 
         return res.status(200).json({ 
@@ -60,14 +63,14 @@ app.post('/api/v1/transaction', (req, res) => {
             hash: req.body.hash
         });
 
-    } catch (validationError) {
-        console.error(`\n⚠️ [MEMPOOL CRITICAL REJECTION] ${validationError.message}`);
-        return res.status(400).json({ error: validationError.message });
+    } catch (error) {
+        console.error(`\n⚠️ [MEMPOOL PERSISTENCE REJECTION] ${error.message}`);
+        return res.status(400).json({ error: error.message });
     }
 });
 
 app.listen(PORT, () => {
     console.log(`=================================================================`);
-    console.log(`🚀 MEDORCOIN ENGINE ACTIVATED NATIVELY WITH SIGNATURE GATEWAY ON PORT ${PORT}`);
+    console.log(`🚀 MEDORCOIN NODE ONLINE NATIVELY WITH ACTIVE REDIS INTEGRATION ON PORT ${PORT}`);
     console.log(`=================================================================`);
 });
