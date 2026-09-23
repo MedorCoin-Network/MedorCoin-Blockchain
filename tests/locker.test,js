@@ -1,0 +1,65 @@
+/**
+ * MEDORCOIN PROFESSIONAL LOCKER - LOCAL DEPLOYMENT UNIT TESTS
+ * Purpose: Structural validation verification for oracle price routing and asset locks.
+ */
+
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
+
+describe("MedorCoinProfessionalLocker Deployment Gateway", function () {
+  let Locker, locker, MockOracle, oracle, MockToken, token;
+  let owner, treasury, user;
+
+  beforeEach(async function () {
+    [owner, treasury, user] = await ethers.getSigners();
+
+    // 1. Deploy Mock Chainlink Aggregator (Simulating a $3000 Ether/Native Token Price)
+    const MockAggregator = await ethers.getContractFactory("MockV3Aggregator");
+    // Parameters: decimals = 8, initialAnswer = 3000 * 10^8
+    oracle = await MockAggregator.deploy(8, 300000000000n); 
+    await oracle.waitForDeployment();
+
+    // 2. Deploy Mock ERC20 Token for testing deposits
+    const TokenFactory = await ethers.getContractFactory("MockERC20");
+    token = await TokenFactory.deploy("Test Token", "TST", ethers.parseEther("1000000"));
+    await token.waitForDeployment();
+
+    // 3. Deploy the Hardened Locker Contract
+    Locker = await ethers.getContractFactory("MedorCoinProfessionalLocker");
+    locker = await Locker.deploy(await oracle.getAddress(), treasury.address);
+    await locker.waitForDeployment();
+
+    // Mint and approve tokens for the test user
+    await token.transfer(user.address, ethers.parseEther("1000"));
+    await token.connect(user).approve(await locker.getAddress(), ethers.parseEther("1000"));
+  });
+
+  it("Should accurately compute the dynamic $45 USD fee baseline", async function () {
+    const requiredPayment = await locker.getRequiredPayment();
+    // At $3000 per coin, $45 USD should equal exactly 0.015 native tokens (1.5e16 Wei)
+    expect(requiredPayment).to.equal(ethers.parseEther("0.015"));
+  });
+
+  it("Should successfully execute an asset lock when a correct fee is provided", async function () {
+    const fee = await locker.getRequiredPayment();
+    const lockAmount = ethers.parseEther("100");
+    const unlockTime = Math.floor(Date.now() / 1000) + 86400; // 1 day in the future
+
+    await expect(
+      locker.connect(user).createLock(await token.getAddress(), lockAmount, unlockTime, false, { value: fee })
+    ).to.emit(locker, "TokenLocked");
+
+    const userLocks = await locker.getUserLocks(user.address);
+    expect(userLocks.length).to.equal(1);
+  });
+
+  it("Should reject transactions attempting to bypass the $45 USD fee barrier", async function () {
+    const insufficientFee = ethers.parseEther("0.001");
+    const lockAmount = ethers.parseEther("100");
+    const unlockTime = Math.floor(Date.now() / 1000) + 86400;
+
+    await expect(
+      locker.connect(user).createLock(await token.getAddress(), lockAmount, unlockTime, false, { value: insufficientFee })
+    ).to.be.revertedWith("Insufficient $45 fee");
+  });
+});
