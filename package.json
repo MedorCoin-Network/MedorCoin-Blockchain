@@ -13,13 +13,16 @@
     "build": "node-gyp rebuild"
   },
   "dependencies": {
+    "adm-zip": "^0.6.1",
     "argon2": "^0.40.1",
     "axios": "^1.20.0",
+    "brace-expansion": "^5.0.9",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^5.2.1",
     "ioredis": "^5.4.1",
     "jsonwebtoken": "^9.0.2",
     "node-addon-api": "^7.1.0",
+    "qs": "^6.16.0",
     "ws": "^8.16.0"
   },
   "devDependencies": {
@@ -28,5 +31,9 @@
     "ethers": "^6.17.0",
     "hardhat": "^3.15.0",
     "node-gyp": "^11.0.0"
+  },
+  "allowScripts": {
+    "argon2@0.40.3": true,
+    "esbuild@0.28.2": true
   }
 }
