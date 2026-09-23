@@ -1,0 +1,46 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name medorcoin.org www.medorcoin.org;
+
+    # Primary root deployment folder path targeting your repository files
+    root /workspaces/MedorCoin-Blockchain;
+    index index.html;
+
+    # Global security response adjustments
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    # Frontend Page Asset Allocations
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Bridge Iframe Path Helper
+    location /swap.html {
+        try_files /swap.html =404;
+        # Clear frame restrictions specifically so index.html can embed it natively
+        add_header X-Frame-Options "ALLOWALL" always;
+    }
+
+    # Secure Reverse Proxy Tunnel for Web3 Providers & Apps
+    location /api/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        
+        # Keep client network stream definitions active
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Retain custom system tracking parameters (like x-mdr-api-key)
+        proxy_pass_request_headers on;
+        
+        # Prevent proxy buffering delays for live streaming trades
+        proxy_buffering off;
+    }
+}
