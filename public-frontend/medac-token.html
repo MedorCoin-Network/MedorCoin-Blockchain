@@ -1,8 +1,5 @@
 # 1. Ensure the target subfolder exists in your workspace root
 mkdir -p public-frontend
-
-# 2. Write the complete, glossy multi-asset trading engine file directly to the folder
-cat << 'EOF' > public-frontend/medac-token.html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -225,10 +222,14 @@ cat << 'EOF' > public-frontend/medac-token.html
     .news-card { padding: 22px; display: flex; flex-direction: column; gap: 10px; }
     .news-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #f43f5e; }
 
+    /* FAQ Transitions */
     .faq-section { padding: 30px; margin-bottom: 40px; }
     .faq-item { border-bottom: 1px solid var(--glass-border); padding: 18px 0; cursor: pointer; }
-    .faq-question { font-size: 16px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-    .faq-answer { font-size: 14px; color: #94a3b8; font-weight: 600; margin-top: 12px; display: none; line-height: 1.6; }
+    .faq-question { font-size: 16px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+    .faq-icon { font-size: 18px; font-weight: 700; transition: transform 0.2s ease; color: var(--candy-pink); }
+    .faq-answer { font-size: 14px; color: #94a3b8; font-weight: 600; margin-top: 0; max-height: 0; overflow: hidden; line-height: 1.6; transition: max-height 0.3s ease, margin-top 0.3s ease; }
+    .faq-item.active .faq-icon { transform: rotate(45deg); }
+    .faq-item.active .faq-answer { margin-top: 12px; max-height: 200px; }
   </style>
 </head>
 <body>
@@ -250,8 +251,5 @@ cat << 'EOF' > public-frontend/medac-token.html
       </div>
       <button class="candy-btn candy-btn-blue" style="padding: 12px 24px;" onclick="connectWallet()">Connect Wallet</button>
     </div>
-  </header>
 
-  <div class="hero-container">
-    <div class="left-column">
       <div class="artwork-banner">
