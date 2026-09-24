@@ -104,25 +104,19 @@
 </head>
 <body>
 
-  <!-- REPAIRED GRID FRAME: Guarantees the swap card renders properly in your template matrix -->
+   <!-- FIXED GRID FRAME: Configured to display all feature tiles cleanly -->
   <div class="grid" id="tileGrid" aria-label="Portal tiles">
 
     <!-- NEW TILE: Placed first in the grid sequence -->
-    <a class="tile" href="medac-token.html" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);">
-      <div class="icon" style="font-size: 20px;">💎</div>
-      <b>MEDAC Token</b>
-      <span class="muted" style="color: #f1f5f9; opacity: 0.9;">Glossy Multi-Asset Hub</span>
+    <a class="tile" href="medac-token.html" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: #fff; border: 1px solid var(--border); box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3); min-height: 96px; display: flex; flex-direction: column; justify-content: center; padding: 12px; border-radius: 14px;">
+      <div class="icon" style="font-size: 20px; margin-bottom: 4px;">💎</div>
+      <b style="color: #ffffff; font-size: 16px;">MEDAC Token</b>
+      <span class="muted" style="color: #f1f5f9; opacity: 0.9; font-size: 12px; margin-top: 4px;">Glossy Multi-Asset Hub</span>
     </a>
 
-    <!-- Blockchain Card (Now shifts to second position) -->
+    <!-- Blockchain Card (Shifts cleanly to second position) -->
     <a class="tile bg-teal" href="/blockchain.html">
       <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#B5943F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.4" fill="#F1E8C6" stroke="#B5943F"/><circle cx="19" cy="6" r="2.4" fill="#F1E8C6" stroke="#B5943F"/><circle cx="5" cy="18" r="2.4" fill="#F1E8C6" stroke="#B5943F"/><circle cx="19" cy="18" r="2.4" fill="#F1E8C6" stroke="#B5943F"/><path d="M7.2 6h9.6"/><path d="M5 8.6v6.8"/><path d="M19 8.6v6.8"/></svg></div>
-      <b>Blockchain</b>
-      <span class="muted">On-chain tools & explorer</span>
-    </a>
-        
-    <!-- Blockchain Card -->
-    <a class="tile bg-teal" href="blockchain.html" style="min-height:96px;">
       <b>Blockchain</b>
       <span class="muted">On-chain tools & explorer</span>
     </a>
