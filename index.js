@@ -14,8 +14,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve all frontend layout assets natively from this folder
+// Serve main root frontend assets
 app.use(express.static(path.join(__dirname)));
+
+// FIXED: Serve assets from the public-frontend folder so medac-token.html goes live
+app.use(express.static(path.join(__dirname, 'public-frontend')));
 
 // Root landing page logic maps directly to your homepage dashboard
 app.get('/', (req, res) => {
@@ -40,20 +43,16 @@ app.post('/api/v1/rpc', (req, res) => {
 app.post('/api/v1/transaction', async (req, res) => {
     const apiKey = req.headers['x-mdr-api-key'];
 
-    // Verify system key authorization parameter rules
     if (apiKey !== process.env.MDR_API_KEY && apiKey !== "mdr_free_4v4ckccy2su3z2i4qfewkg5o") {
         return res.status(401).json({ error: "Unauthorized gateway network credentials." });
     }
 
     try {
-        // 1. Enforce the cryptographic signature validation rule block
         verifyOnChainTransaction(req.body);
-
-        // 2. Commit the validated parameters directly to the Redis database mempool pipeline
         await commitTxToLedgerState(req.body);
 
         console.log(`\n=================================================================`);
-        console.log(`🎉 TRANSACTION ATOMICALLY PERSISTED & QUEUED TO REDOS MEMPOOL`);
+        console.log(`🎉 TRANSACTION ATOMICALLY PERSISTED & QUEUED TO REDIS MEMPOOL`);
         console.log(`Sender: ${req.body.sender} | Status: COMMITTED_TO_MEMPOOL`);
         console.log(`=================================================================`);
 
@@ -71,6 +70,6 @@ app.post('/api/v1/transaction', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`=================================================================`);
-    console.log(`🚀 MEDORCOIN NODE ONLINE NATIVELY WITH ACTIVE REDIS INTEGRATION ON PORT ${PORT}`);
+    console.log(`🚀 MEDORCOIN NODE ONLINE SERVING PUBLIC-FRONTEND ON PORT ${PORT}`);
     console.log(`=================================================================`);
 });
