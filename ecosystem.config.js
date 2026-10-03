@@ -15,10 +15,11 @@ module.exports = {
       script: "redis-server", 
       args: "--port 6381 --cluster-enabled no --cluster-config-file nodes-6381.conf --daemonize no" 
     },
-    { 
+        { 
       name: "medor-engine", 
-      script: "npm start", 
+      script: "node.cjs", 
       delay: 5000 
     }
+
   ]
 };
