@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "node node.cjs",
+    "medac:start": "node medac_main.cjs",
     "install": "node-gyp rebuild",
     "build": "node-gyp rebuild"
   },

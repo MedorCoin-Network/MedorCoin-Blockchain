@@ -1,143 +1,970 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>MedorCoin — Home</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medac | Blockchain Dashboard</title>
+  <meta name="description" content="Medac blockchain dashboard for status, health, tokenomics, peers, blocks, and secure buy flows." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <style>
-    :root{--bg:#0f172a;--ink:#e5e7eb;--muted:#94a3b8;--border:#334155;--success:#10b981}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:#e2e8f0}
-    a{color:inherit;text-decoration:none}
-    .container{max-width:980px;margin:0 auto;padding:12px}
-    .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .space{justify-content:space-between}
-    .brand{font-weight:800;font-size:18px}
-    .searchbar{display:flex;align-items:center;gap:8px;background:#111827;border:1px solid var(--border);border-radius:999px;padding:10px 12px;margin-top:12px}
-    .searchbar input{border:0;outline:0;flex:1;font-size:14px;color:#e5e7eb;background:transparent}
-    .pill{font-size:12px;background:#1e293b;color:#e5e7eb;border:1px solid #334155;border-radius:999px;padding:4px 8px}
-    .tabs{display:flex;gap:10px;overflow:auto;padding:10px 0;margin-top:8px}
-    .tab{display:flex;align-items:center;gap:6px;background:#1f2937;border:1px solid var(--border);color:#e2e8f0;border-radius:999px;padding:8px 12px;font-size:13px;white-space:nowrap}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:12px}
-    .tile{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px;min-height:96px;display:flex;flex-direction:column;gap:8px;justify-content:center}
-    .muted{color:var(--muted);font-size:12px}
-    .icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center}
-    .bg-blue{background:#0B3D91;color:#fff;border:1px solid var(--border)}
-    .bg-teal{background:#87CEEB;color:#333;border:1px solid var(--border)}
-    .bg-orange{background:#FFD6A3;color:#333;border:1px solid var(--border)}
-    .bg-dark{background:#3F3F3F;color:#FDE68A;border:1px solid var(--border)}
+    :root {
+      --bg-1: #050b16;
+      --bg-2: #0b1220;
+      --bg-3: #111a2a;
+      --panel: rgba(16, 24, 38, 0.78);
+      --line: rgba(148, 163, 184, 0.26);
+      --line-strong: rgba(255, 255, 255, 0.14);
+      --text: #edf4ff;
+      --muted: #a6b6d0;
+      --gold: #f7d87a;
+      --gold-2: #e9ac57;
+      --blue: #5bb5ff;
+      --green: #3fe9b5;
+      --orange: #ffb857;
+      --purple: #7b6ef7;
+      --shadow: rgba(8, 12, 20, 0.6);
+      --radius: 22px;
+      --max: 1280px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(124, 92, 255, 0.24), transparent 24%),
+        radial-gradient(circle at top right, rgba(87, 165, 255, 0.2), transparent 28%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 28%, var(--bg-3) 100%);
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+
+    .page {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 24px 18px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 22px;
+      border-radius: 18px;
+      background: rgba(8, 13, 22, 0.82);
+      border: 1px solid var(--line);
+      box-shadow: 0 16px 28px var(--shadow);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 8px;
+      z-index: 20;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-family: 'Cinzel', serif;
+      font-weight: 800;
+      color: #0a1220;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2), #fff1bf);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.75), 0 8px 18px rgba(247,216,122,0.3);
+      border: 1px solid rgba(255,255,255,0.32);
+    }
+
+    .brand-text {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.2rem, 2vw, 1.9rem);
+      letter-spacing: 0.08em;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav a {
+      color: var(--muted);
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      transition: 0.2s ease;
+    }
+
+    .nav a:hover {
+      color: var(--text);
+      border-color: var(--line-strong);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .pill-btn {
+      margin-left: 4px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      color: #111827;
+      font-weight: 800;
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 10px 18px rgba(247,216,122,0.22);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.45fr 0.9fr;
+      gap: 22px;
+      margin-top: 28px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(20, 29, 46, 0.96), rgba(11, 18, 29, 0.9));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 36px var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.06), transparent 42%, rgba(255,255,255,0.02));
+      pointer-events: none;
+    }
+
+    .hero-main { padding: 28px 26px 20px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(91, 181, 255, 0.08);
+      border: 1px solid rgba(91,181,255,0.2);
+      color: var(--blue);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2.5rem, 5vw, 5rem);
+      line-height: 0.94;
+      letter-spacing: -0.05em;
+      margin: 18px 0 12px;
+      background: linear-gradient(180deg, #ffffff, #dbeaff 52%, #8bb6f3 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 12px 26px rgba(33, 104, 191, 0.22);
+    }
+
+    .lead {
+      max-width: 60ch;
+      color: var(--muted);
+      font-size: clamp(0.96rem, 1.5vw, 1.12rem);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .cta-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+
+    .primary, .secondary {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      padding: 13px 18px;
+      border-radius: 14px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      color: #152337;
+      box-shadow: 0 14px 30px rgba(247, 216, 122, 0.28);
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.02);
+      border-color: var(--line-strong);
+      color: var(--text);
+    }
+
+    .primary:hover, .secondary:hover { transform: translateY(-1px); }
+
+    .mini-stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .mini-card {
+      padding: 14px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      min-height: 98px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 7px;
+    }
+
+    .mini-tag {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .mini-value {
+      font-size: clamp(1.2rem, 2vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      color: var(--text);
+    }
+
+    .live-metric {
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      align-self: flex-start;
+      font-weight: 800;
+      font-size: 0.78rem;
+      letter-spacing: 0.08em;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(63, 233, 181, 0.25);
+      background: rgba(63, 233, 181, 0.08);
+      color: var(--green);
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 18px rgba(63,233,181,0.8);
+    }
+
+    .status-badge[data-online="false"] {
+      color: #ff8585;
+      border-color: rgba(255, 133, 133, 0.3);
+      background: rgba(255, 133, 133, 0.08);
+    }
+
+    .status-badge[data-online="false"] .status-dot {
+      background: #ff8585;
+      box-shadow: 0 0 18px rgba(255, 133, 133, 0.7);
+    }
+
+    .chain-visual {
+      margin-top: 10px;
+      display: grid;
+      place-items: center;
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(115, 146, 255, 0.18), rgba(14, 18, 28, 0.85));
+      border: 1px solid rgba(149, 172, 255, 0.14);
+      min-height: 235px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chain-visual::before {
+      content: "";
+      position: absolute;
+      inset: 18px 32px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.07), rgba(91,181,255,0.05));
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .chain-core {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: 'Cinzel', serif;
+      font-weight: 800;
+      font-size: clamp(1.1rem, 2vw, 1.5rem);
+      background: radial-gradient(circle at 35% 30%, rgba(122, 143, 255, 0.8), rgba(58, 84, 167, 0.25) 30%, rgba(6, 10, 18, 0.8) 64%);
+      box-shadow: inset 0 0 28px rgba(142, 164, 255, 0.28), 0 0 42px rgba(107, 126, 255, 0.22);
+      border: 1px solid rgba(172, 190, 255, 0.34);
+      position: relative;
+      z-index: 1;
+    }
+
+    .chain-ring {
+      position: absolute;
+      inset: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 50%;
+      box-shadow: 0 0 24px rgba(110, 121, 255, 0.18);
+    }
+
+    .chain-ring:nth-child(2) { transform: scale(1.16); }
+    .chain-ring:nth-child(3) { transform: scale(1.32); }
+
+    .card-grid {
+      margin-top: 28px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 18px;
+    }
+
+    .metric-card {
+      padding: 18px 18px 16px;
+      background: rgba(17, 27, 40, 0.78);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 18px 30px rgba(3, 7, 13, 0.34);
+    }
+
+    .metric-title {
+      color: var(--muted);
+      font-size: 0.74rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .metric-value {
+      font-size: clamp(1.5rem, 3vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      margin-bottom: 8px;
+    }
+
+    .metric-sub {
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .section {
+      margin-top: 34px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 4px;
+    }
+
+    .section-header h2 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.5rem, 2vw, 2.2rem);
+      margin: 0;
+      letter-spacing: -0.04em;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-size: 0.72rem;
+      color: var(--muted);
+      background: rgba(255,255,255,0.02);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+    }
+
+    .tokenomics { padding: 22px 20px 18px; }
+
+    .bars {
+      display: grid;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 70px;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.85rem;
+    }
+
+    .bar-label { color: var(--muted); }
+
+    .bar-track {
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--gold), var(--gold-2), var(--orange));
+      box-shadow: inset 0 0 10px rgba(255,255,255,0.24);
+    }
+
+    .bar-value {
+      text-align: right;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .token-box {
+      padding: 22px 20px 18px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .token-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .token-name {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1;
+      letter-spacing: -0.06em;
+      margin: 0;
+    }
+
+    .symbol-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(247, 216, 122, 0.28);
+      background: rgba(247,216,122,0.08);
+      color: var(--gold);
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .contract-box {
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .list li { display: flex; align-items: center; gap: 8px; }
+    .list li::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      box-shadow: 0 0 12px rgba(247,216,122,0.8);
+    }
+
+    .buy-box {
+      padding: 22px 20px 20px;
+      margin-top: 18px;
+    }
+
+    .pay-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(130px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .method {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px 12px;
+      color: var(--text);
+      font-weight: 800;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .method:hover, .method.active {
+      border-color: rgba(247,216,122,0.42);
+      background: linear-gradient(135deg, rgba(247,216,122,0.12), rgba(91,181,255,0.08));
+      box-shadow: 0 10px 24px rgba(247,216,122,0.16);
+    }
+
+    .purchase-summary {
+      margin-top: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.02);
+      border-radius: 16px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+
+    .summary-row:last-child { border-bottom: none; }
+    .summary-row strong { color: var(--text); }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(260px, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .table-panel { padding: 20px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    th {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    td:nth-child(2), th:nth-child(2) { text-align: right; }
+
+    .peer-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .peer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .peer-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px rgba(63,233,181,0.7);
+    }
+
+    .faq { padding: 22px 20px 8px; }
+
+    .faq-list {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    details {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 16px 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    summary::-webkit-details-marker { display: none; }
+
+    details[open] summary {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .faq-content {
+      padding: 15px 18px 18px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.94rem;
+    }
+
+    .faq-content strong { color: var(--text); }
+
+    .footer {
+      margin-top: 36px;
+      padding: 18px 10px 0;
+      color: var(--muted);
+      text-align: center;
+      border-top: 1px solid var(--line);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: 1fr; }
+      .card-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
+      .data-grid, .two-col { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .topbar { flex-direction: column; align-items: flex-start; }
+      .nav { justify-content: flex-start; }
+      .mini-stats, .card-grid, .pay-grid { grid-template-columns: 1fr 1fr; }
+      .bar-row { grid-template-columns: 100px 1fr 52px; }
+    }
+
+    @media (max-width: 520px) {
+      .page { padding-inline: 14px; }
+      .mini-stats, .card-grid, .pay-grid { grid-template-columns: 1fr; }
+      .cta-row { flex-direction: column; }
+      .bar-row { grid-template-columns: 1fr; }
+      .bar-value { text-align: left; }
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="row space" style="background:linear-gradient(135deg,#1f3a8a 0%,#1e40af 100%);color:white;padding:12px 16px;border-radius:14px;margin-bottom:14px;">
-    <span class="brand">MedorCoin</span>
-    <div style="font-size:12px;display:flex;gap:12px;">
-      <a href="create-wallet.html">Create Wallet</a> |
-      <a href="connect-wallet.html">Connect Wallet</a> |
-      <a href="signup.html">SignUp</a> |
-      <a href="login.html">Login</a>
-    </div>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-mark">M</div>
+        <div class="brand-text">Medac</div>
+      </div>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="#overview">Overview</a>
+        <a href="#tokenomics">Tokenomics</a>
+        <a href="#network">Network</a>
+        <a href="#buy">Buy</a>
+        <a href="#faq">FAQ</a>
+        <a class="pill-btn" href="#network">Node Status</a>
+      </nav>
+    </header>
+
+    <main id="overview">
+      <section class="hero">
+        <div class="panel hero-main">
+          <div class="eyebrow">Production-ready blockchain</div>
+          <h1>Medac</h1>
+          <p class="lead">
+            Institutional-grade token infrastructure for transparent, secure, and efficient financial rails. Medac operates as a blockchain-native utility layer for MedorCoin infrastructure, monetization, and secure peer validation.
+          </p>
+          <div class="cta-row">
+            <a class="primary" href="#buy">Purchase status</a>
+            <a class="secondary" href="#network">View Network</a>
+          </div>
+          <div class="mini-stats" id="miniStats"></div>
+        </div>
+
+        <div class="panel live-metric">
+          <div class="status-badge" id="statusBadge"><span class="status-dot"></span><span id="statusText">Connecting</span></div>
+          <div class="chain-visual" aria-label="Medac network visualization">
+            <div class="chain-core">MEDAC</div>
+            <div class="chain-ring"></div>
+            <div class="chain-ring"></div>
+            <div class="chain-ring"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card-grid" aria-label="Metric overview" id="metricGrid"></section>
+
+      <section class="section two-col" id="tokenomics">
+        <div class="panel tokenomics">
+          <div class="section-header">
+            <h2>Tokenomics</h2>
+            <span class="tag" id="tokenomicsStatus">Connecting</span>
+          </div>
+          <div class="bars" id="tokenBars"></div>
+        </div>
+
+        <div class="panel token-box">
+          <div class="token-head">
+            <div><div class="symbol-badge">MEDAC</div></div>
+            <div class="tag">TOKEN</div>
+          </div>
+          <h3 class="token-name">Medac</h3>
+          <div class="contract-box">
+            <strong>Genesis allocation address</strong><br />
+            0xD81e7078bEE7ad3a313a74ED171E2941b7455f1D
+          </div>
+          <ul class="list">
+            <li>Symbol: MEDAC</li>
+            <li>Utility-first token for transactional infrastructure</li>
+            <li>Rewards flow directly to connected wallets</li>
+            <li>Built for transparent finance and secure settlement</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="buy">
+        <div class="section-header">
+          <h2>Buy Medac</h2>
+          <span class="tag">Not configured</span>
+        </div>
+        <div class="panel buy-box">
+          <p class="lead">Purchases are not configured on this node. MEDAC is the native asset of the MEDAC PoW network; this dashboard does not accept or process payments.</p>
+        </div>
+      </section>
+
+      <section class="section" id="network">
+        <div class="section-header">
+          <h2>Network</h2>
+          <span class="tag">Health + peers</span>
+        </div>
+        <div class="data-grid">
+          <div class="panel table-panel">
+            <table>
+              <thead>
+                <tr>
+                  <th>Block</th>
+                  <th>Time</th>
+                  <th>Miner</th>
+                </tr>
+              </thead>
+              <tbody id="blockTable"></tbody>
+            </table>
+          </div>
+
+          <div class="panel table-panel">
+            <div class="metric-title">Peer health</div>
+            <div class="peer-list" id="peerList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section faq" id="faq">
+        <div class="section-header">
+          <h2>FAQ</h2>
+          <span class="tag">Support</span>
+        </div>
+        <div class="faq-list" id="faqList"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Medac • Transparent infrastructure • Institutional-grade token rails • Secure chain operations
+    </footer>
   </div>
-  <div class="searchbar">
-    <span>🔎</span>
-    <input id="q" placeholder="Search tiles..." oninput="filterTiles(this.value)"/>
-    <span class="pill">AI</span>
-  </div>
-  <div class="tabs">
-    <a class="tab" href="index.html">🏠 HomePage</a>
-    <a class="tab" href="miners.html">⛏️ Miners</a>
-    <a class="tab" href="developers.html">👩‍💻 Developers</a>
-    <a class="tab" href="trading.html">📈 Crypto Trading</a>
-  </div>
-  <div style="text-align:center;margin:6px 0 14px;">
-    <span style="color:#EDE3DA;font-weight:700;font-size:16px;">Welcome to MedorCoin — explore tools, APIs, and insights.</span>
-  </div>
-  
-  <div class="grid" id="tileGrid">
-    <!-- 1. MEDAC Token (FIRST TILE) -->
-    <a class="tile" href="medac-token.html" style="background:linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);color:#fff;">
-      <div class="icon">💎</div>
-      <b>MEDAC Token</b>
-      <span class="muted" style="color:#f1f5f9;">Glossy Multi-Asset Hub</span>
-    </a>
-    
-    <!-- 2. Blockchain -->
-    <a class="tile bg-teal" href="blockchain.html">
-      <div class="icon">⛓️</div>
-      <b>Blockchain</b>
-      <span class="muted">On-chain tools & explorer</span>
-    </a>
 
-    <!-- 3. Rent/Buy API -->
-    <a class="tile" href="combined_api_portal.html" style="background:#87CEEB;color:#1f1f1f;">
-      <div class="icon">🔗</div>
-      <b>Rent/Buy API</b>
-      <span class="muted" style="color:#1f1f1f;">API access</span>
-    </a>
+  <script>
+    const networkStatus = document.getElementById('statusText');
+    const statusBadge = document.getElementById('statusBadge');
 
-    <!-- 4. For Miners -->
-    <a class="tile" href="miners.html" style="background:#FFD6A3;color:#333;">
-      <div class="icon">⛏️</div>
-      <b>For Miners</b>
-      <span class="muted">Start mining</span>
-    </a>
+    const faqItems = [
+      { q: 'What is Medac about?', a: 'Medac is a blockchain-native utility layer designed to enable secure, transparent, and scalable transactional infrastructure for the MedorCoin ecosystem. It is built to support financial institutions, utility payments, and high-trust financial operations.' },
+      { q: "What is Medac's contract address and symbol?", a: '<strong>Symbol:</strong> MEDAC<br /><strong>Network:</strong> MEDAC-POW-1<br />MEDAC is a native asset, not an EVM token contract. The address shown above is a genesis allocation address.' },
+      { q: 'How do I buy Medac?', a: 'Purchases are not configured on this node. The dashboard does not accept payments; use only a purchase channel officially published by the MEDAC network operators.' },
+      { q: 'How do I connect my wallet?', a: 'Wallet connection is not enabled on this dashboard. MEDAC node addresses are used by the native chain; EVM wallet support is not implied.' },
+      { q: 'What payment modes are available?', a: 'No payment modes are currently configured on the connected node.' },
+      { q: 'How are transaction fees handled?', a: 'MEDAC transactions use the network consensus fee rules. The node does not expose a percentage-based purchase fee or locked-liquidity purchase flow.' },
+      { q: 'How are token rewards distributed?', a: 'Block rewards are issued to the miner address included in each valid block, subject to the consensus reward schedule and remaining mining reserve.' },
+      { q: "What are Medac's milestones and future partnerships?", a: 'Medac aims to become the financial-institution utility token for transparent, trusted transactions across the MedorCoin infrastructure stack. The roadmap prioritizes secure rails, institutional partnerships, transparent treasury management, and scalable exchange integrations.' },
+      { q: "What is MedorCoin's broader mission?", a: "MedorCoin's infrastructure is designed to be free, transparent, and highly secure. The goal is to support accessible blockchain participation while creating a trusted financial technology layer for modern institutional use." },
+      { q: 'How do I verify network status and health?', a: 'Use the live network cards and health indicators on this dashboard. The production path includes secure proxy routing and health checking through the /healthz endpoint.' }
+    ];
 
-    <!-- 5. For Developers -->
-    <a class="tile" href="developers.html" style="background:#87CEEB;color:#333;">
-      <div class="icon">👩‍💻</div>
-      <b>For Developers</b>
-      <span class="muted">Docs & SDKs</span>
-    </a>
+    function shorten(value) {
+      return value && value.length > 18 ? `${value.slice(0, 10)}...${value.slice(-6)}` : value || 'Unknown';
+    }
 
-    <!-- 6. Crypto Trading -->
-    <a class="tile" href="crypto-trading.html" style="background:#2f2f2f;color:#FDE68A;">
-      <div class="icon">📈</div>
-      <b>Crypto Trading</b>
-      <span class="muted" style="color:#FDE68A;">Markets & tools</span>
-    </a>
+    function renderNetwork(data) {
+      const formatUnits = value => {
+        const units = BigInt(value);
+        const whole = units / (10n ** 18n);
+        const fraction = (units % (10n ** 18n)).toString().padStart(18, '0').replace(/0+$/, '');
+        return `${whole.toLocaleString()}${fraction ? `.${fraction}` : ''}`;
+      };
+      const stats = [
+        { label: 'Height', value: data.height.toLocaleString() },
+        { label: 'Connected peers', value: data.peerCount.toLocaleString() },
+        { label: 'Issued MEDAC', value: formatUnits(data.totalSupply) },
+        { label: 'Health', value: 'Online' }
+      ];
+      document.getElementById('miniStats').innerHTML = stats.map(stat => `
+        <div class="mini-card"><div class="mini-tag">${stat.label}</div><div class="mini-value">${stat.value}</div></div>
+      `).join('');
 
-    <!-- 7. Courses -->
-    <a class="tile" href="learn.html" style="background:#0B3D91;color:#fff;">
-      <div class="icon">📚</div>
-      <b>Courses</b>
-      <span class="muted" style="color:#fff;">Guides</span>
-    </a>
+      const latestBlock = data.recentBlocks[0];
+      const cards = [
+        { title: 'Network ID', value: data.networkId, sub: `Genesis ${shorten(data.genesisHash)}` },
+        { title: 'Latest block', value: latestBlock ? `#${latestBlock.height}` : 'None', sub: latestBlock ? shorten(latestBlock.hash) : 'No blocks confirmed yet.' },
+        { title: 'Pending transactions', value: data.pendingTransactions, sub: 'Transactions currently held in this node mempool.' },
+        { title: 'Chain tip', value: shorten(data.tipHash), sub: data.height ? `Updated ${new Date(data.timestamp * 1000).toLocaleString()}` : 'Genesis state; no blocks mined yet.' }
+      ];
+      document.getElementById('metricGrid').innerHTML = cards.map(card => `
+        <div class="metric-card"><div class="metric-title">${card.title}</div><div class="metric-value">${card.value}</div><div class="metric-sub">${card.sub}</div></div>
+      `).join('');
 
-    <!-- 8. Chatroom -->
-    <a class="tile" href="Chatroom.html" style="background:#E6D5FF;color:#A089FF;">
-      <div class="icon">💬</div>
-      <b>Chatroom</b>
-      <span class="muted" style="color:#A089FF;">Chat & support</span>
-    </a>
+      const cap = BigInt(data.tokenomics.totalSupplyCap);
+      const allocations = [
+        { label: 'Genesis supply', amount: data.tokenomics.genesisSupply },
+        { label: 'Mining reserve', amount: data.tokenomics.miningReserve }
+      ];
+      document.getElementById('tokenBars').innerHTML = allocations.map(item => {
+        const amount = BigInt(item.amount);
+        const percent = Number(amount * 10000n / cap) / 100;
+        return `<div class="bar-row"><div class="bar-label">${item.label}</div><div class="bar-track"><span class="bar-fill" style="width: ${percent}%"></span></div><div class="bar-value">${percent}%</div></div>`;
+      }).join('') + `<p class="metric-sub">Cap: ${formatUnits(data.tokenomics.totalSupplyCap)} MEDAC. Initial block reward: ${formatUnits(data.tokenomics.initialBlockReward)} MEDAC. Halving interval: ${data.tokenomics.halvingInterval.toLocaleString()} blocks. Target block time: ${data.tokenomics.targetBlockTime}s.</p>`;
 
-    <!-- 9. Crypto Whales -->
-    <a class="tile" href="crypto-whales.html" style="background:#F5F5DC;color:#333;">
-      <div class="icon">🐋</div>
-      <b>Crypto Whales</b>
-      <span class="muted" style="color:#333;">Large flows</span>
-    </a>
+      document.getElementById('blockTable').innerHTML = data.recentBlocks.length ? data.recentBlocks.map(block => `
+        <tr><td>#${block.height}</td><td>${new Date(block.timestamp * 1000).toLocaleString()}</td><td>${shorten(block.minerAddress)}</td></tr>
+      `).join('') : '<tr><td colspan="3">No confirmed blocks yet</td></tr>';
 
-    <!-- 10. More -->
-    <a class="tile" href="more.html" style="background:#1e293b;color:#fff;">
-      <div class="icon">＋</div>
-      <b>More</b>
-      <span class="muted" style="color:#94a3b8;">All features</span>
-    </a>
-  </div>
+      document.getElementById('peerList').innerHTML = data.peers.length ? data.peers.map(peer => `
+        <div class="peer-item"><span>${peer.address} (${peer.direction})</span><span class="peer-state"><span class="dot"></span>online</span></div>
+      `).join('') : '<div class="peer-item"><span>No connected peers</span><span>0</span></div>';
 
-  <footer style="text-align:center;margin-top:40px;padding:12px 0;border-top:1px solid var(--border);color:#9eadb2;font-size:12px;">
-    <div>© MedorCoin 2026</div>
-    <p>Trade responsibly. You must be 18+ years old to use this platform.</p>
-  </footer>
-</div>
-<script>
-function filterTiles(val) {
-  const q = val.toLowerCase();
-  document.querySelectorAll("#tileGrid .tile").forEach(t => {
-    t.style.display = t.textContent.toLowerCase().includes(q) ? "flex" : "none";
-  });
-}
-</script>
+      networkStatus.textContent = 'Online';
+      statusBadge.dataset.online = 'true';
+      statusBadge.setAttribute('aria-label', 'Node API online');
+      document.getElementById('tokenomicsStatus').textContent = 'Node config';
+    }
+
+    function renderDisconnected() {
+      networkStatus.textContent = 'Offline';
+      statusBadge.dataset.online = 'false';
+      statusBadge.setAttribute('aria-label', 'Node API unavailable');
+      document.getElementById('tokenomicsStatus').textContent = 'Unavailable';
+      document.getElementById('tokenBars').innerHTML = '<p class="metric-sub">Live tokenomics data unavailable.</p>';
+      document.getElementById('miniStats').innerHTML = '<div class="mini-card"><div class="mini-tag">Node API</div><div class="mini-value">Offline</div></div>';
+      document.getElementById('metricGrid').innerHTML = '<div class="metric-card"><div class="metric-title">Live data</div><div class="metric-value">Unavailable</div><div class="metric-sub">Could not reach /api/dashboard. Retrying automatically.</div></div>';
+      document.getElementById('blockTable').innerHTML = '<tr><td colspan="3">Live block data unavailable</td></tr>';
+      document.getElementById('peerList').innerHTML = '<div class="peer-item"><span>Peer data unavailable</span><span>--</span></div>';
+    }
+
+    async function refreshNetwork() {
+      try {
+        const response = await fetch('/api/dashboard', { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Dashboard API returned ${response.status}`);
+        const data = await response.json();
+        if (data.status !== 'ok' || !Array.isArray(data.peers) || !Array.isArray(data.recentBlocks)) {
+          throw new Error('Invalid dashboard API response');
+        }
+        renderNetwork(data);
+      } catch (error) {
+        renderDisconnected();
+      }
+    }
+
+    refreshNetwork();
+    window.setInterval(refreshNetwork, 10000);
+
+    document.getElementById('faqList').innerHTML = faqItems.map(item => `
+      <details>
+        <summary><span>${item.q}</span><span>+</span></summary>
+        <div class="faq-content">${item.a}</div>
+      </details>
+    `).join('');
+  </script>
 </body>
 </html>
